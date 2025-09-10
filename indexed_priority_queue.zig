@@ -217,71 +217,67 @@ pub fn IndexedPriorityQueue(
     };
 }
 
-// --- Driver Code ---
+// --- Test Code ---
 
-// Comparator for a max-heap of integers. `a` has higher priority if it's greater than `b`.
-fn intMaxHeapComparator(_: void, a: i32, b: i32) bool {
-    return a > b;
-}
-
-// Helper to display the contents of the IPQ without consuming it.
-// It clones the queue and then pops elements one by one in priority order.
-fn display(ipq: anytype) !void {
-    var temp_ipq = try ipq.clone();
-    defer temp_ipq.deinit();
-
-    std.debug.print("IPQ: ", .{});
-    while (!temp_ipq.isEmpty()) {
-        const entry = temp_ipq.pop() catch unreachable;
-        std.debug.print("({d}, {d}) ", .{ entry.key, entry.value });
+ const Test = if (@import("builtin").is_test) struct {
+    // Comparator for a max-heap of integers. `a` has higher priority if it's greater than `b`.
+    fn intMaxHeapComparator(_: void, a: i32, b: i32) bool {
+        return a > b;
     }
-    std.debug.print("\n", .{});
-}
+ } else struct {};
 
-pub fn main() !void {
-    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
-    defer _ = gpa.deinit();
-    const allocator = gpa.allocator();
+test "IndexedPriorityQueue operations" {
+    const testing = std.testing;
+    const allocator = testing.allocator;
 
     // Define the concrete type for our IPQ (i32 key, i32 value, max-heap).
-    const IntIntMaxIPQ = IndexedPriorityQueue(i32, i32, void, intMaxHeapComparator);
+    const IntIntMaxIPQ = IndexedPriorityQueue(i32, i32, void, Test.intMaxHeapComparator);
 
     // Create an instance of the IPQ.
     var ipq = IntIntMaxIPQ.init(allocator, {});
     defer ipq.deinit();
 
-    std.debug.print("Checking if initially the IPQ is empty\n", .{});
-    std.debug.print("IPQ is empty? {any}\n\n", .{ipq.isEmpty()});
+    // -- Check initial state --
+    try testing.expect(ipq.isEmpty());
+    try testing.expectEqual(@as(usize, 0), ipq.size());
 
-    std.debug.print("Inserting pairs (2, 1), (3, 7), (1, 0) and (4, 5)\n", .{});
+    // -- Insert pairs (2, 1), (3, 7), (1, 0) and (4, 5) --
     try ipq.push(2, 1);
     try ipq.push(3, 7);
     try ipq.push(1, 0);
     try ipq.push(4, 5);
 
-    try display(&ipq);
-    std.debug.print("Size: {d}\n", .{ipq.size()});
-    if (ipq.top()) |top| {
-        std.debug.print("Top: ({d}, {d})\n\n", .{ top.key, top.value });
-    }
+    // -- Check state after insertion --
+    try testing.expectEqual(@as(usize, 4), ipq.size());
+    // The top element should be the one with the highest value (7)
+    var top_entry = ipq.top().?;
+    try testing.expectEqual(@as(i32, 3), top_entry.key);
+    try testing.expectEqual(@as(i32, 7), top_entry.value);
 
-    std.debug.print("Changing value associated with key 3 to 2 and 1 to 9\n", .{});
+    // -- Change value associated with key 3 to 2 and 1 to 9 --
     try ipq.changeValue(3, 2);
     try ipq.changeValue(1, 9);
 
-    try display(&ipq);
-    std.debug.print("Size: {d}\n", .{ipq.size()});
-    if (ipq.top()) |top| {
-        std.debug.print("Top: ({d}, {d})\n\n", .{ top.key, top.value });
-    }
+    // -- Check state after value change --
+    try testing.expectEqual(@as(usize, 4), ipq.size());
+    // The new top element should be key 1 with the new highest value (9)
+    top_entry = ipq.top().?;
+    try testing.expectEqual(@as(i32, 1), top_entry.key);
+    try testing.expectEqual(@as(i32, 9), top_entry.value);
 
-    std.debug.print("Popping two elements...\n", .{});
-    _ = try ipq.pop();
-    _ = try ipq.pop();
+    // -- Pop two elements --
+    var popped = try ipq.pop();
+    try testing.expectEqual(@as(i32, 1), popped.key); // Popped (1, 9)
+    try testing.expectEqual(@as(i32, 9), popped.value);
 
-    try display(&ipq);
-    std.debug.print("Size: {d}\n", .{ipq.size()});
-    if (ipq.top()) |top| {
-        std.debug.print("Top: ({d}, {d})\n\n", .{ top.key, top.value });
-    }
+    popped = try ipq.pop();
+    try testing.expectEqual(@as(i32, 4), popped.key); // Popped (4, 5)
+    try testing.expectEqual(@as(i32, 5), popped.value);
+
+    // -- Check final state --
+    try testing.expectEqual(@as(usize, 2), ipq.size());
+    // The final top element should be key 3 with value 2
+    top_entry = ipq.top().?;
+    try testing.expectEqual(@as(i32, 3), top_entry.key);
+    try testing.expectEqual(@as(i32, 2), top_entry.value);
 }
