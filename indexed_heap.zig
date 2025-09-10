@@ -135,18 +135,23 @@ pub fn IndexedPriorityQueue(
 
         /// Creates a deep copy of the IPQ.
         pub fn clone(self: *const Self) Error!Self {
-            var new_ipq = Self.init(self.allocator, self.context);
-            errdefer new_ipq.deinit();
+            // Clone the heap's ArrayList. If this fails, we exit immediately.
+            const new_heap = try self.heap.clone();
 
-            try new_ipq.heap.appendSlice(self.heap.items);
+            // If heap.clone() succeeds but map.clone() fails, this errdefer
+            // ensures the newly allocated heap memory is freed.
+            errdefer new_heap.deinit();
 
-            // TODO is there no more efficient way to clone the map?
-            var it = self.map.iterator();
-            while (it.next()) |entry| {
-                try new_ipq.map.put(entry.key_ptr.*, entry.value_ptr.*);
-            }
+            // Clone the map.
+            const new_map = try self.map.clone();
 
-            return new_ipq;
+            // Both clones were successful, so we can construct the new IPQ.
+            return Self{
+                .heap = new_heap,
+                .map = new_map,
+                .allocator = self.allocator,
+                .context = self.context,
+            };
         }
 
         // --- Private Helper Methods ---
