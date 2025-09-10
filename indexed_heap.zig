@@ -147,7 +147,7 @@ pub fn IndexedPriorityQueue(
             // TODO is there no more efficient way to clone the map?
             var it = self.map.iterator();
             while (it.next()) |entry| {
-                try new_ipq.map.put(entry.key, entry.value);
+                try new_ipq.map.put(entry.key_ptr.*, entry.value_ptr.*);
             }
 
             return new_ipq;
