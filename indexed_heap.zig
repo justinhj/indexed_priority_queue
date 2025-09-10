@@ -33,10 +33,10 @@ pub fn IndexedPriorityQueue(
         const Self = @This();
         pub const Entry = struct { key: Key, value: Value };
 
-        // The binary heap, stored as a flat array.
+        // The binary heap is just a dynamic array
         heap: std.ArrayList(Entry),
 
-        // Maps keys to their 0-based index in the `heap` array.
+        // Maps keys to their index in the `heap` array.
         map: std.AutoHashMap(Key, usize),
 
         // Allocator for the heap and map.
@@ -62,12 +62,10 @@ pub fn IndexedPriorityQueue(
             self.* = undefined;
         }
 
-        /// Returns the number of elements in the queue.
         pub fn size(self: *const Self) usize {
             return self.heap.items.len;
         }
 
-        /// Returns `true` if the queue is empty.
         pub fn isEmpty(self: *const Self) bool {
             return self.heap.items.len == 0;
         }
@@ -123,9 +121,7 @@ pub fn IndexedPriorityQueue(
         /// The element's position is adjusted to maintain the heap property.
         /// Returns `error.KeyNotFound` if the key does not exist.
         pub fn changeValue(self: *Self, key: Key, new_value: Value) Error!void {
-            const index_ptr = self.map.getPtr(key) orelse return Error.KeyNotFound;
-            const index = index_ptr.*;
-
+            const index = self.map.get(key) orelse return Error.KeyNotFound;
             const old_value = self.heap.items[index].value;
             self.heap.items[index].value = new_value;
 
