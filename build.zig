@@ -5,8 +5,8 @@ pub fn build(b: *std.Build) void {
     const optimize = b.standardOptimizeOption(.{});
 
     const exe = b.addExecutable(.{
-        .name = "indexed_heap",
-        .root_source_file = b.path("indexed_heap.zig"),
+        .name = "indexed_priority_queue",
+        .root_source_file = b.path("indexed_priority_queue.zig"),
         .target = target,
         .optimize = optimize,
     });
