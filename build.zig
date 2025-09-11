@@ -4,22 +4,21 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const exe = b.addExecutable(.{
+    const lib = b.addStaticLibrary(.{
         .name = "indexed_priority_queue",
-        .root_source_file = b.path("indexed_priority_queue.zig"),
+        .root_source_file = b.path("./src/indexed_priority_queue.zig"),
         .target = target,
         .optimize = optimize,
     });
 
-    b.installArtifact(exe);
+    b.installArtifact(lib);
 
-    const run_cmd = b.addRunArtifact(exe);
-    run_cmd.step.dependOn(b.getInstallStep());
+    const main_tests = b.addTest(.{
+        .root_source_file = b.path("./src/indexed_priority_queue.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
 
-    if (b.args) |args| {
-        run_cmd.addArgs(args);
-    }
-
-    const run_step = b.step("run", "Run the app");
-    run_step.dependOn(&run_cmd.step);
+    const test_step = b.step("test", "Run library tests");
+    test_step.dependOn(&main_tests.step);
 }
