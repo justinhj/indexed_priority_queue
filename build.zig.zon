@@ -1,0 +1,11 @@
+.{
+    .name = .indexed_priority_queue,
+    .version = "0.0.1",
+    .dependencies = .{},
+    .paths = .{
+        "build.zig",
+        "build.zig.zon",
+        "src",
+    },
+    .fingerprint = 0xff08596f7bf2a6ce,
+}
