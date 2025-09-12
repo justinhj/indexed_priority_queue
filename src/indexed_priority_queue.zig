@@ -70,6 +70,11 @@ pub fn IndexedPriorityQueue(
             return self.heap.items.len == 0;
         }
 
+        /// Returns true if the queue contains the given key.
+        pub fn contains(self: *const Self, key: Key) bool {
+            return self.map.contains(key);
+        }
+
         /// Returns a const pointer to the highest-priority element without removing it.
         /// Returns `null` if the queue is empty.
         pub fn top(self: *const Self) ?*const Entry {
@@ -240,12 +245,20 @@ test "IndexedPriorityQueue operations" {
     // -- Check initial state --
     try testing.expect(ipq.isEmpty());
     try testing.expectEqual(@as(usize, 0), ipq.size());
+    try testing.expect(!ipq.contains(1));
 
     // -- Insert pairs (2, 1), (3, 7), (1, 0) and (4, 5) --
     try ipq.push(2, 1);
     try ipq.push(3, 7);
     try ipq.push(1, 0);
     try ipq.push(4, 5);
+
+    // -- Check contains after insertion --
+    try testing.expect(ipq.contains(1));
+    try testing.expect(ipq.contains(2));
+    try testing.expect(ipq.contains(3));
+    try testing.expect(ipq.contains(4));
+    try testing.expect(!ipq.contains(5));
 
     // -- Check state after insertion --
     try testing.expectEqual(@as(usize, 4), ipq.size());
@@ -269,10 +282,12 @@ test "IndexedPriorityQueue operations" {
     var popped = try ipq.pop();
     try testing.expectEqual(@as(i32, 1), popped.key); // Popped (1, 9)
     try testing.expectEqual(@as(i32, 9), popped.value);
+    try testing.expect(!ipq.contains(1));
 
     popped = try ipq.pop();
     try testing.expectEqual(@as(i32, 4), popped.key); // Popped (4, 5)
     try testing.expectEqual(@as(i32, 5), popped.value);
+    try testing.expect(!ipq.contains(4));
 
     // -- Check final state --
     try testing.expectEqual(@as(usize, 2), ipq.size());
@@ -280,4 +295,6 @@ test "IndexedPriorityQueue operations" {
     top_entry = ipq.top().?;
     try testing.expectEqual(@as(i32, 3), top_entry.key);
     try testing.expectEqual(@as(i32, 2), top_entry.value);
+    try testing.expect(ipq.contains(2));
+    try testing.expect(ipq.contains(3));
 }

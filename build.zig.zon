@@ -1,6 +1,6 @@
 .{
     .name = .indexed_priority_queue,
-    .version = "0.0.2",
+    .version = "0.0.3",
     .dependencies = .{},
     .paths = .{
         "build.zig",
