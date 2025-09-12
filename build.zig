@@ -4,7 +4,7 @@ pub fn build(b: *std.Build) void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
 
-    const mod = b.addModule("flex", .{
+    const mod = b.addModule("indexed_priority_queue", .{
         .root_source_file = b.path("./src/indexed_priority_queue.zig"),
         .target = target,
         .optimize = optimize,
