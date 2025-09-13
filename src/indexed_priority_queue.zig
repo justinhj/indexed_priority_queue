@@ -75,6 +75,13 @@ pub fn IndexedPriorityQueue(
             return self.map.contains(key);
         }
 
+        /// Returns a const pointer to the entry for the given key.
+        /// Returns `null` if the key is not in the queue.
+        pub fn get(self: *const Self, key: Key) ?*const Entry {
+            const index = self.map.get(key) orelse return null;
+            return &self.heap.items[index];
+        }
+
         /// Returns a const pointer to the highest-priority element without removing it.
         /// Returns `null` if the queue is empty.
         pub fn top(self: *const Self) ?*const Entry {
@@ -246,6 +253,7 @@ test "IndexedPriorityQueue operations" {
     try testing.expect(ipq.isEmpty());
     try testing.expectEqual(@as(usize, 0), ipq.size());
     try testing.expect(!ipq.contains(1));
+    try testing.expect(ipq.get(1) == null);
 
     // -- Insert pairs (2, 1), (3, 7), (1, 0) and (4, 5) --
     try ipq.push(2, 1);
@@ -259,6 +267,12 @@ test "IndexedPriorityQueue operations" {
     try testing.expect(ipq.contains(3));
     try testing.expect(ipq.contains(4));
     try testing.expect(!ipq.contains(5));
+
+    // -- Check get after insertion --
+    var entry = ipq.get(3).?;
+    try testing.expectEqual(@as(i32, 3), entry.key);
+    try testing.expectEqual(@as(i32, 7), entry.value);
+    try testing.expect(ipq.get(5) == null);
 
     // -- Check state after insertion --
     try testing.expectEqual(@as(usize, 4), ipq.size());
@@ -278,16 +292,23 @@ test "IndexedPriorityQueue operations" {
     try testing.expectEqual(@as(i32, 1), top_entry.key);
     try testing.expectEqual(@as(i32, 9), top_entry.value);
 
+    // -- Check get after value change --
+    entry = ipq.get(1).?;
+    try testing.expectEqual(@as(i32, 1), entry.key);
+    try testing.expectEqual(@as(i32, 9), entry.value);
+
     // -- Pop two elements --
     var popped = try ipq.pop();
     try testing.expectEqual(@as(i32, 1), popped.key); // Popped (1, 9)
     try testing.expectEqual(@as(i32, 9), popped.value);
     try testing.expect(!ipq.contains(1));
+    try testing.expect(ipq.get(1) == null);
 
     popped = try ipq.pop();
     try testing.expectEqual(@as(i32, 4), popped.key); // Popped (4, 5)
     try testing.expectEqual(@as(i32, 5), popped.value);
     try testing.expect(!ipq.contains(4));
+    try testing.expect(ipq.get(4) == null);
 
     // -- Check final state --
     try testing.expectEqual(@as(usize, 2), ipq.size());
