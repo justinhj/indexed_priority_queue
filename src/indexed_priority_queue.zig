@@ -48,7 +48,7 @@ pub fn IndexedPriorityQueue(
         /// Initializes a new, empty IndexedPriorityQueue.
         pub fn init(allocator: Allocator, context: Context) Self {
             return Self{
-                .heap = std.ArrayList(Entry).init(allocator),
+                .heap = std.ArrayList(Entry).empty,
                 .map = std.AutoHashMap(Key, usize).init(allocator),
                 .allocator = allocator,
                 .context = context,
@@ -56,8 +56,8 @@ pub fn IndexedPriorityQueue(
         }
 
         /// Deinitializes the IPQ, freeing all associated memory.
-        pub fn deinit(self: *Self) void {
-            self.heap.deinit();
+        pub fn deinit(self: *Self, allocator: Allocator) void {
+            self.heap.deinit(allocator);
             self.map.deinit();
             self.* = undefined;
         }
@@ -93,13 +93,13 @@ pub fn IndexedPriorityQueue(
 
         /// Adds a new key-value pair to the queue.
         /// Returns `error.KeyAlreadyExists` if the key is already present.
-        pub fn push(self: *Self, key: Key, value: Value) Error!void {
+        pub fn push(self: *Self, allocator: Allocator, key: Key, value: Value) Error!void {
             if (self.map.contains(key)) {
                 return Error.KeyAlreadyExists;
             }
 
             const new_entry = Entry{ .key = key, .value = value };
-            try self.heap.append(new_entry);
+            try self.heap.append(allocator, new_entry);
             const new_index = self.heap.items.len - 1;
             try self.map.put(key, new_index);
 
@@ -247,7 +247,7 @@ test "IndexedPriorityQueue operations" {
 
     // Create an instance of the IPQ.
     var ipq = IntIntMaxIPQ.init(allocator, {});
-    defer ipq.deinit();
+    defer ipq.deinit(allocator);
 
     // -- Check initial state --
     try testing.expect(ipq.isEmpty());
@@ -256,10 +256,10 @@ test "IndexedPriorityQueue operations" {
     try testing.expect(ipq.get(1) == null);
 
     // -- Insert pairs (2, 1), (3, 7), (1, 0) and (4, 5) --
-    try ipq.push(2, 1);
-    try ipq.push(3, 7);
-    try ipq.push(1, 0);
-    try ipq.push(4, 5);
+    try ipq.push(allocator, 2, 1);
+    try ipq.push(allocator, 3, 7);
+    try ipq.push(allocator, 1, 0);
+    try ipq.push(allocator, 4, 5);
 
     // -- Check contains after insertion --
     try testing.expect(ipq.contains(1));
